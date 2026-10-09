@@ -78,7 +78,7 @@ constexpr const char *kOfflineSetupConfirmFeedback = "再次确认进入配网";
 constexpr const char *kSetupStartFailedFeedback = "配网启动失败";
 constexpr const char *kOfflineSetupInstructionFeedback = "请完成配网后关闭";
 constexpr const char *kNetworkDiagSyncFeedback = "正在网络检测...";
-constexpr const char *kFactoryResetConfirmFeedback = "再次按 BOOT 确认";
+constexpr const char *kFactoryResetConfirmFeedback = "再次双击 BOOT 确认";
 constexpr const char *kFactoryResetFailedFeedback = "恢复失败";
 constexpr size_t kSettingsFeedbackTextSize = 32;
 #define CHIME_BOOLEAN_SETTING_LOG_FORMAT "%s %s"

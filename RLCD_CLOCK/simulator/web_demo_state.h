@@ -1,4 +1,5 @@
 // 管理浏览器演示的独立状态，不调用硬件、网络或持久化服务。
+// 输入模型与固件一致：唯一可用 BOOT 键，单击移动、双击确认、长按返回。
 #pragma once
 #include <array>
 #include <cstdint>
@@ -20,10 +21,16 @@ struct WebDemoState {
     uint8_t enabled = 255;
     bool dirty = true, confirming = false, pending = false;
     double last_input = 0, feedback_until = 0, complete_at = 0, operation_started = 0, return_block = 0;
-    bool back_handled = false;
+    bool long_handled = false;
+    bool click_pending = false;
+    bool second_press = false;
+    double pressed_since = 0, last_click_at = 0;
     double pomodoro_until = 0;
     int progress = 0;
     char feedback[160]{};
+    static constexpr double kDoubleClickGapMs = 350;
+    static constexpr double kLongPressMs = 1200;
+    static constexpr double kDebounceMs = 18;
     int count() const {
         if (scene == Pages) return kWorkPageCount;
         if (scene == Order) { int n=0; for(int i:order) if(enabled & (1<<i)) ++n; return n; }
@@ -48,44 +55,31 @@ struct WebDemoState {
     void start_operation(const char *text, double now, double duration=1500) {
         pending=true; operation_started=now; complete_at=now+duration; progress=0; message(text,now);
     }
-    void press(int key, bool held, double now) {
+    void single_click(double now) {
         last_input=now;
-        if(pomodoro_completed){pomodoro_completed=false;back_handled=false;dirty=true;return;}
-        if (scene==Alert || scene==Low || scene==Boot) {back_handled=false;work(now);return;}
-        if(key==2) {
-            if(held && !back_handled) {
-                back_handled=true;
-                if(scene==Work || scene==Setup) return;
-                pending=false; confirming=false;
-                if(scene==Pages || scene==Order) {selection=scene==Order?1:0;scene=Settings; secondary=true; message("设置已保存",now);}
-                else if(scene!=Settings) {scene=Settings;secondary=true;dirty=true;}
-                else if(secondary) {secondary=false;return_block=now+800;dirty=true;}
-                else if(now>=return_block) work(now);
-            } else if(!held) {
-                back_handled=false;
+        if(scene==Work) { next_page(); return; }
+        if(scene==Info || scene==Setup) return;
+        if(scene==Diagnostics || scene==Ota) return;
+        if(pending) return;
+        confirming=false;
+        if(scene==Settings&&!secondary) {primary=(primary+1)%kSettingsPrimaryCount;selection=0;}
+        else selection=(selection+1)%count();
+        dirty=true;
+    }
+    void double_click(double now) {
+        last_input=now;
+        if(scene==Work) { settings(now); return; }
+        if(scene==Info || scene==Setup) return;
+        if(scene==Diagnostics) { if(!pending) start_operation("正在网络检测...",now,3000); return; }
+        if(scene==Ota) {
+            if(offline){message("当前处于离线模式",now);return;}
+            if(!pending) {
+                if(!confirming) {confirming=true;message("发现演示更新，双击BOOT确认",now);}
+                else start_operation("正在更新...",now,3000);
             }
             return;
         }
-        if (held) {
-            return;
-        }
-        if(scene==Work) { if(key==0) next_page(); else settings(now); return; }
-        if(scene==Info || scene==Setup) return;
-        if(scene==Diagnostics) { if(key==0&&!pending) start_operation("正在网络检测...",now,3000); return; }
-        if(scene==Ota) {
-            if(offline){message("当前处于离线模式",now);return;}
-            if(key==0&&!pending) {
-                if(!confirming) {confirming=true;message("发现演示更新，BOOT确认",now);}
-                else start_operation("正在更新...",now,3000);
-            } return;
-        }
         if(pending) return;
-        if(key==1) {
-            confirming=false;
-            if(scene==Settings&&!secondary) {primary=(primary+1)%kSettingsPrimaryCount;selection=0;}
-            else selection=(selection+1)%count();
-            dirty=true;return;
-        }
         if(scene==Settings&&!secondary) {secondary=true;selection=0;dirty=true;return;}
         if(scene==Pages) {
             const uint8_t mask=static_cast<uint8_t>(enabled^(1<<selection));
@@ -127,16 +121,75 @@ struct WebDemoState {
                 if(offline&&!confirming){confirming=true;message("再次确认关闭离线模式",now);}
                 else {offline=!offline;confirming=false;message(offline?"离线模式已开启":"离线模式已关闭",now);}
             } else if(selection==1){scene=Diagnostics;start_operation("正在网络检测...",now,3000);}
-            else if(selection==2){if(!confirming){confirming=true;message("再次按 BOOT 确认",now);}else reset(now);}
+            else if(selection==2){if(!confirming){confirming=true;message("再次双击 BOOT 确认",now);}else reset(now);}
             else if(selection==3)scene=Info;
-            else {scene=Ota; confirming=false; message(offline?"当前处于离线模式":"BOOT检查更新",now);}
+            else {scene=Ota; confirming=false; message(offline?"当前处于离线模式":"双击BOOT检查更新",now);}
         }
         dirty=true;
+    }
+    void long_press(double now) {
+        last_input=now;
+        if(scene==Work || scene==Setup || scene==Alert || scene==Low || scene==Boot) return;
+        pending=false; confirming=false;
+        if(scene==Pages || scene==Order) {selection=scene==Order?1:0;scene=Settings; secondary=true; message("设置已保存",now);}
+        else if(scene!=Settings) {scene=Settings;secondary=true;dirty=true;}
+        else if(secondary) {secondary=false;return_block=now+800;dirty=true;}
+        else if(now>=return_block) work(now);
+    }
+    void press(int key, bool held, double now) {
+        if(key != 0) return;
+        if(pomodoro_completed){pomodoro_completed=false;dirty=true;return;}
+        if(scene==Alert || scene==Low || scene==Boot) {work(now);return;}
+        if(held) {
+            if(pressed_since==0) {
+                pressed_since=now;
+                long_handled=false;
+                second_press=click_pending &&
+                             last_click_at!=0 &&
+                             now-last_click_at<=kDoubleClickGapMs;
+            } else if(!long_handled && now-pressed_since>=kLongPressMs) {
+                click_pending=false;
+                second_press=false;
+                last_click_at=0;
+                long_press(now);
+                long_handled=true;
+            }
+            return;
+        }
+        if(pressed_since!=0) {
+            double held_ms=now-pressed_since;
+            if(!long_handled && held_ms>=kDebounceMs && held_ms<kLongPressMs) {
+                if(second_press) {
+                    click_pending=false;
+                    second_press=false;
+                    last_click_at=0;
+                    double_click(now);
+                } else {
+                    click_pending=true;
+                    last_click_at=now;
+                }
+            }
+            pressed_since=0;
+        }
     }
     void advance(double now) {
         if(conversation && now>=conversation_until) {
             conversation=conversation==3?0:conversation+1;
             conversation_until=now+(conversation==3?4000:1000);dirty=true;
+        }
+        if(pressed_since!=0 &&
+           !long_handled &&
+           now-pressed_since>=kLongPressMs) {
+            click_pending=false;
+            second_press=false;
+            last_click_at=0;
+            long_press(now);
+            long_handled=true;
+        }
+        if(pressed_since==0 && click_pending && now-last_click_at>=kDoubleClickGapMs) {
+            click_pending=false;
+            last_click_at=0;
+            single_click(now);
         }
         if(pending) {
             int next=static_cast<int>(100*(now-operation_started)/(complete_at-operation_started));if(next<0)next=0;if(next>100)next=100;

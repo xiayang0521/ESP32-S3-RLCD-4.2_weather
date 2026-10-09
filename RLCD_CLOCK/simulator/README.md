@@ -8,8 +8,9 @@ Activate Emscripten 4.0.23 and run `python3 host_web/scripts/build_web_simulator
 from the repository root. The browser target uses LVGL 8.4.0 and SDL2, shares
 the native preview renderers, and exposes a separate fake state adapter in
 `web_demo_state.h`. It does not run ESP-IDF network, NVS, audio or flashing code.
-The clock follows local computer time. K/B/L keyboard input and virtual buttons
-drive settings and scenes; pressing BACK returns one level.
+The clock follows local computer time. Keyboard input and the single virtual
+BOOT button drive settings and scenes: single click moves, double click
+confirms, and long press returns one level.
 
 Generated JS, WASM, isolated portal HTML and hash metadata live in the ignored
 `host_web/simulator/` directory. Pages rebuilds them from committed sources.

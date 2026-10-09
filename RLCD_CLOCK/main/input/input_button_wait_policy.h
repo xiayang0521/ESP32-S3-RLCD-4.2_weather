@@ -14,22 +14,19 @@ constexpr bool button_gpio_config_retry_due(unsigned completed_attempt,
 
 constexpr bool button_task_can_wait_for_edge(bool edge_wakeup_ready,
                                              bool boot_pressed,
-                                             bool sel_pressed,
-                                             bool back_pressed,
-                                             bool press_tracking_active)
+                                             bool click_pending)
 {
     return edge_wakeup_ready &&
            !boot_pressed &&
-           !sel_pressed &&
-           !back_pressed &&
-           !press_tracking_active;
+           !click_pending;
 }
 
-constexpr int button_task_poll_delay_ms(bool any_button_pressed,
+constexpr int button_task_poll_delay_ms(bool boot_pressed,
+                                        bool click_pending,
                                         bool interactive_surface,
                                         bool low_refresh_surface)
 {
-    if (any_button_pressed) {
+    if (boot_pressed || click_pending) {
         return kButtonPressedPollMs;
     }
     if (interactive_surface) {

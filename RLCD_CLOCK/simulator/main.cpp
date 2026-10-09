@@ -276,7 +276,7 @@ static void build_info_preview_ui()
     }
 
     make_black_bar(screen, 24, 238, 352, 3);
-    lv_obj_t *return_label = make_label_with_font(screen, 24, 252, 352, 22, "Hold BACK to return", &lv_font_montserrat_14);
+    lv_obj_t *return_label = make_label_with_font(screen, 24, 252, 352, 22, "Long-press BOOT to return", &lv_font_montserrat_14);
     lv_obj_set_style_text_align(return_label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
 }
 
@@ -497,7 +497,7 @@ static void render_web_demo()
             auto *label=sdl_preview_widgets::make_label(root,24,68,352,180,body);
             lv_obj_set_style_text_align(label,LV_TEXT_ALIGN_CENTER,0);
         }
-        auto *hint=sdl_preview_widgets::make_label(root,24,270,352,22,"按 BACK 返回");lv_obj_set_style_text_align(hint,LV_TEXT_ALIGN_CENTER,0);
+        auto *hint=sdl_preview_widgets::make_label(root,24,270,352,22,"长按 BOOT 返回");lv_obj_set_style_text_align(hint,LV_TEXT_ALIGN_CENTER,0);
     }
     if(g_demo.scene==WebDemoState::Work) g_work_status.set_simulated_status(!g_demo.offline,g_demo.hourly||g_demo.all_day,g_demo.alarm);
     lv_refr_now(nullptr);

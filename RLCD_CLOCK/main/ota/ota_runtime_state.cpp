@@ -15,7 +15,7 @@
 namespace {
 constexpr uint32_t kOtaRuntimeStateMask = 0xffu;
 constexpr uint32_t kOtaRuntimeRebootPendingBit = 1u << 8;
-constexpr const char *kOtaInitialStatus = "BOOT: Check Update";
+constexpr const char *kOtaInitialStatus = "Double-click BOOT: Check Update";
 
 struct OtaRuntimeControlState {
     int state = kOtaIdle;

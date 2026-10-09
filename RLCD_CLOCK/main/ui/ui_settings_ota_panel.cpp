@@ -30,11 +30,11 @@ constexpr const char *kSettingsOtaUpdatingFormat = "OTA %d%%";
 constexpr const char *kSettingsOtaCurrentVersionFormat = "当前版本 %s";
 constexpr const char *kSettingsOtaLinePlaceholder = "OTA --";
 constexpr const char *kSettingsOtaHintDownloading = "下载中，请等待";
-constexpr const char *kSettingsOtaHintInstall = "BOOT安装更新";
+constexpr const char *kSettingsOtaHintInstall = "双击BOOT安装更新";
 constexpr const char *kSettingsOtaHintChecking = "正在检查，请等待";
 constexpr const char *kSettingsOtaHintRebooting = "即将重启";
-constexpr const char *kSettingsOtaHintRetry = "BOOT重新检查";
-constexpr const char *kSettingsOtaHintCheck = "BOOT开始检查";
+constexpr const char *kSettingsOtaHintRetry = "双击BOOT重新检查";
+constexpr const char *kSettingsOtaHintCheck = "双击BOOT开始检查";
 int settings_ota_progress_fill_width(int progress)
 {
     int clamped = progress;
