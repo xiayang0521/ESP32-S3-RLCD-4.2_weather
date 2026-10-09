@@ -63,7 +63,34 @@ jobs:
             exit 1
           fi
 
+      - name: 检查发布环境凭据
+        id: credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${SECRET_OTA_MANIFEST_URL:-}" && -n "${SECRET_OTA_BACKUP_MANIFEST_URL:-}" ]]; then
+            echo "ota_endpoint=enabled" >> "$GITHUB_OUTPUT"
+          else
+            echo "ota_endpoint=disabled" >> "$GITHUB_OUTPUT"
+          fi
+          if [[ -n "${SECRET_OTA_MIRROR_DISPATCH_TOKEN:-}" ]]; then
+            echo "github_mirror=enabled" >> "$GITHUB_OUTPUT"
+          else
+            echo "github_mirror=disabled" >> "$GITHUB_OUTPUT"
+          fi
+          if [[ -n "${SECRET_GITEE_OTA_TOKEN:-}" ]]; then
+            echo "gitee_mirror=enabled" >> "$GITHUB_OUTPUT"
+          else
+            echo "gitee_mirror=disabled" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          SECRET_OTA_MANIFEST_URL: ${{ secrets.WEATHER_CLOCK_OTA_MANIFEST_URL }}
+          SECRET_OTA_BACKUP_MANIFEST_URL: ${{ secrets.WEATHER_CLOCK_OTA_BACKUP_MANIFEST_URL }}
+          SECRET_OTA_MIRROR_DISPATCH_TOKEN: ${{ secrets.OTA_MIRROR_DISPATCH_TOKEN }}
+          SECRET_GITEE_OTA_TOKEN: ${{ secrets.GITEE_OTA_TOKEN }}
+
       - name: 准备私有 OTA 端点
+        if: steps.credentials.outputs.ota_endpoint == 'enabled'
         env:
           OTA_MANIFEST_URL: ${{ secrets.WEATHER_CLOCK_OTA_MANIFEST_URL }}
           OTA_BACKUP_MANIFEST_URL: ${{ secrets.WEATHER_CLOCK_OTA_BACKUP_MANIFEST_URL }}
@@ -74,6 +101,11 @@ jobs:
             --output RLCD_CLOCK/main/core/ota_endpoint_local.h
           test -s RLCD_CLOCK/main/core/ota_endpoint_local.h
           echo "Private OTA endpoint configuration prepared"
+
+      - name: 跳过私有 OTA 端点（fork 缺少密钥时使用占位地址）
+        if: steps.credentials.outputs.ota_endpoint == 'disabled'
+        shell: bash
+        run: echo "OTA endpoint secrets absent; firmware builds with public placeholder OTA URL"
 
       - name: 编译并生成双固件
         uses: espressif/esp-idf-ci-action@v1
@@ -188,6 +220,7 @@ jobs:
           fi
 
       - name: 通知 GitHub OTA 主仓库同步
+        if: steps.credentials.outputs.github_mirror == 'enabled'
         env:
           OTA_MIRROR_DISPATCH_TOKEN: ${{ secrets.OTA_MIRROR_DISPATCH_TOKEN }}
           OTA_MIRROR_REPOSITORY: ${{ vars.OTA_MIRROR_REPOSITORY }}
@@ -234,6 +267,7 @@ jobs:
           echo "GitHub OTA mirror dispatch accepted for $VERSION"
 
       - name: 通知 Gitee OTA 备用仓库同步
+        if: steps.credentials.outputs.gitee_mirror == 'enabled'
         env:
           GITEE_OTA_TOKEN: ${{ secrets.GITEE_OTA_TOKEN }}
           GITEE_OTA_REPOSITORY: ${{ vars.GITEE_OTA_REPOSITORY }}
