@@ -1,6 +1,20 @@
 {
-  "latest": "v1.6.16",
+  "latest": "v1.6.17",
   "items": [
+    {
+      "version": "v1.6.17",
+      "notes": "v1.6.17：共 1 项更新。\n1. KEY（GPIO18）硬件损坏无法使用，功能迁移到两个新按键：SEL（GPIO2）短按进入设置/移动选择，BACK（GPIO15）返回上一级或退出设置；GPIO18 已从输入与休眠唤醒中移除。\n完整说明见源码仓库同版本 Release。",
+      "app": {
+        "url": "https://github.com/xiayang0521/ESP32-S3-RLCD-4.2_weather/releases/download/v1.6.17/weather_clock_v1.6.17.bin",
+        "sha256": "deee3ea593c3789ec808e10b4fc9ab9abe11f0079fe9c4994c69f5b8faf3d54c",
+        "size": 6315920
+      },
+      "merged": {
+        "url": "https://github.com/xiayang0521/ESP32-S3-RLCD-4.2_weather/releases/download/v1.6.17/weather_clock_v1.6.17_merged.bin",
+        "sha256": "41bc188785bc7d121fb9903a9503e1c310b2db1452a6aca9687b8be46a3cc02c",
+        "size": 16509951
+      }
+    },
     {
       "version": "v1.6.16",
       "notes": "v1.6.16：共 1 项更新。\n1. 聚合时钟新增雾天视觉，使用错落的横向雾带与点阵过渡。\n完整说明见源码仓库同版本 Release。",
@@ -124,20 +138,6 @@
       "merged": {
         "url": "https://github.com/wickenzh/ESP32-S3-RLCD-4.2/releases/download/v1.6.8/weather_clock_v1.6.8_merged.bin",
         "sha256": "f24d50cc216694c09040757c3dadb3ef8d6533a7b3a0ddff15b5206dd6c11d2c",
-        "size": 16509951
-      }
-    },
-    {
-      "version": "v1.6.7",
-      "notes": "v1.6.7：共 4 项更新。\n1. 新增可选 Open-Meteo 天气源，默认关闭；无需和风 Key/Host，支持当前…\n2. WeatherClock Studio 新增简体中文、繁體中文（台湾用语）、Engli…\n3. 修复天气源切换时旧同步请求污染成功更新时间和就绪状态的问题，网络检测和“关于本机”均按…\n4. 优化快捷配置字段对齐并将天气源开关置顶；和风字段仅禁用、不隐藏，保留原有布局和值，设备…\n完整说明见源码仓库同版本 Release。",
-      "app": {
-        "url": "https://github.com/wickenzh/ESP32-S3-RLCD-4.2/releases/download/v1.6.7/weather_clock_v1.6.7.bin",
-        "sha256": "4c214b6e6f82a6c22bc79cd9c60fb3f5bf456eaa82e15a3f8879c85556959572",
-        "size": 6301568
-      },
-      "merged": {
-        "url": "https://github.com/wickenzh/ESP32-S3-RLCD-4.2/releases/download/v1.6.7/weather_clock_v1.6.7_merged.bin",
-        "sha256": "7182d99710c89774d3c01a47585e4449f07df08fee1c12f034a70c04c6def246",
         "size": 16509951
       }
     }

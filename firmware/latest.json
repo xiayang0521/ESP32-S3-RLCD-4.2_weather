@@ -1,7 +1,7 @@
 {
-  "version": "v1.6.16",
-  "url": "https://github.com/wickenzh/ESP32-S3-RLCD-4.2/releases/download/v1.6.16/weather_clock_v1.6.16.bin",
-  "sha256": "345a6f87faa95820a3fa0129a0cc10303efd1df149adde56a2fb6f860ba6f05b",
-  "size": 6316144,
-  "notes": "v1.6.16：共 1 项更新。\n1. 聚合时钟新增雾天视觉，使用错落的横向雾带与点阵过渡。\n完整说明见源码仓库同版本 Release。"
+  "version": "v1.6.17",
+  "url": "https://github.com/xiayang0521/ESP32-S3-RLCD-4.2_weather/releases/download/v1.6.17/weather_clock_v1.6.17.bin",
+  "sha256": "deee3ea593c3789ec808e10b4fc9ab9abe11f0079fe9c4994c69f5b8faf3d54c",
+  "size": 6315920,
+  "notes": "v1.6.17：共 1 项更新。\n1. KEY（GPIO18）硬件损坏无法使用，功能迁移到两个新按键：SEL（GPIO2）短按进入设置/移动选择，BACK（GPIO15）返回上一级或退出设置；GPIO18 已从输入与休眠唤醒中移除。\n完整说明见源码仓库同版本 Release。"
 }
