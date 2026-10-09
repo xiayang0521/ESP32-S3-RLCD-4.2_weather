@@ -13,14 +13,13 @@ API Host is your QWeather account's assigned domain, not a key or API path. For 
 
 ## Use the buttons
 
-The original KEY button (GPIO18) failed, so its functions are split across two new buttons:
+Only **BOOT** (GPIO0) remains as a usable software button. The original KEY/SEL/BACK buttons have all failed physically; PWR is a pure hardware power switch that the firmware cannot read. Three BOOT gestures cover all operations:
 
-- Short **BOOT**: next work page; confirm within settings.
-- Short **SEL (GPIO2)**: open settings; move the selection.
-- **BACK (GPIO15)**: back one level or leave settings; return to settings from the info and network diagnostics pages.
-- While an alarm or focus-completion sound plays, any button stops it.
+- **Click** (~50 ms): cycle work pages outside settings; move the selection inside settings.
+- **Double-click** (two short presses within 350 ms): enter settings from a work page; confirm, enter a secondary item, or change a value inside settings.
+- **Long press** (≥ 1200 ms): step back (secondary→primary→work page); the Info and Network Diagnostics pages return to settings.
 
-Settings close after about 30 idle seconds. The firmware UI is primarily in Simplified Chinese; this guide does not imply a language selector.
+Settings close after about 30 idle seconds. During an alarm or focus-completion sound, pressing BOOT stops it immediately and that press is not consumed for navigation.
 
 ## Everyday use
 
