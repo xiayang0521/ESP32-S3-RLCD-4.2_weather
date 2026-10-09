@@ -22,6 +22,14 @@ int main() {
     s.press(0,false,40002);assert(s.scene==WebDemoState::Work&&s.enabled==255);
     s.scene=WebDemoState::Diagnostics;s.start_operation("test",50000,3000);
     s.advance(53000);assert(!s.pending&&s.progress==100);
+    s.press(2,true,53500);assert(s.scene==WebDemoState::Settings&&s.secondary);
+    s.press(2,true,53501);assert(s.scene==WebDemoState::Settings);
+    s.press(2,false,53502);
+    s.press(2,true,53503);assert(!s.secondary);
+    s.press(2,false,53504);
+    s.scene=WebDemoState::Work;
+    s.press(2,true,53505);assert(s.scene==WebDemoState::Work);
+    s.press(2,false,53506);
     for(int i=0;i<10000;++i){s.press(i%2,false,54000+i);assert(s.page>=0&&s.page<8);assert(s.enabled!=0);assert(s.ordered_page(0)!=6);}
     std::cout<<"Web demo navigation and state tests passed\n";
 }

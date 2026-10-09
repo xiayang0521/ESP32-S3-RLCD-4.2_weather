@@ -1,4 +1,4 @@
-// 维护设置页 KEY 导航、返回状态和二次确认清理逻辑。
+// 维护设置页 SEL 导航、BACK 返回状态和二次确认清理逻辑。
 #include "ui_settings_navigation.h"
 
 #include "active_work_page_state_internal.h"

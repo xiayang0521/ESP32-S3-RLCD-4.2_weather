@@ -20,6 +20,7 @@ struct WebDemoState {
     uint8_t enabled = 255;
     bool dirty = true, confirming = false, pending = false;
     double last_input = 0, feedback_until = 0, complete_at = 0, operation_started = 0, return_block = 0;
+    bool back_handled = false;
     double pomodoro_until = 0;
     int progress = 0;
     char feedback[160]{};
@@ -49,8 +50,22 @@ struct WebDemoState {
     }
     void press(int key, bool held, double now) {
         last_input=now;
-        if(pomodoro_completed){pomodoro_completed=false;dirty=true;return;}
-        if (scene==Alert || scene==Low || scene==Boot) {work(now);return;}
+        if(pomodoro_completed){pomodoro_completed=false;back_handled=false;dirty=true;return;}
+        if (scene==Alert || scene==Low || scene==Boot) {back_handled=false;work(now);return;}
+        if(key==2) {
+            if(held && !back_handled) {
+                back_handled=true;
+                if(scene==Work || scene==Setup) return;
+                pending=false; confirming=false;
+                if(scene==Pages || scene==Order) {selection=scene==Order?1:0;scene=Settings; secondary=true; message("设置已保存",now);}
+                else if(scene!=Settings) {scene=Settings;secondary=true;dirty=true;}
+                else if(secondary) {secondary=false;return_block=now+800;dirty=true;}
+                else if(now>=return_block) work(now);
+            } else if(!held) {
+                back_handled=false;
+            }
+            return;
+        }
         if (held) {
             if(key!=1) return;
             pending=false; confirming=false;

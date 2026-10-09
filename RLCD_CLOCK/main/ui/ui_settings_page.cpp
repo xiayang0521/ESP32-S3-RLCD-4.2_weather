@@ -336,7 +336,7 @@ void build_settings_page()
                         270,
                         352,
                         22,
-                        "KEY选择  长按返回  BOOT确认",
+                        "SEL选择  BACK返回  BOOT确认",
                         "settings hint label create failed");
 }
 

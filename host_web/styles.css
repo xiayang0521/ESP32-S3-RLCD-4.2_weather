@@ -271,7 +271,7 @@ h1 {
 .device-settings .action-strip button { min-width: 0; white-space: normal; line-height: 1.4; padding: 8px 12px; }
 .simulator-layout > [hidden] { display: none; }
 .virtual-device, .virtual-portal { min-width: 0; }
-.device-keys { display: grid; grid-template-columns: 96px minmax(0, 1fr) 96px; align-items: center; gap: 8px; max-width: 440px; margin: 16px auto 8px; }
+.device-keys { display: grid; grid-template-columns: 72px minmax(0, 1fr) 72px 72px; align-items: center; gap: 8px; max-width: 440px; margin: 16px auto 8px; }
 .device-keys button { min-width: 96px; touch-action: none; user-select: none; }
 .device-key-help { min-width: 0; text-align: center; }
 .device-key-help p { margin: 0; color: var(--muted); font-size: 12px; line-height: 18px; overflow-wrap: anywhere; }
@@ -1243,7 +1243,7 @@ progress::-moz-progress-bar { background: var(--accent); }
   .top-actions .language-select { flex: 1 1 auto; min-width: 0; }
   .top-actions .language-select { width: auto; }
   .simulator-actions { gap: 8px; }
-  .device-keys { grid-template-columns: minmax(72px, 88px) minmax(0, 1fr) minmax(72px, 88px); gap: 6px; margin-top: 12px; }
+  .device-keys { grid-template-columns: minmax(56px, 72px) minmax(0, 1fr) minmax(56px, 72px) minmax(56px, 72px); gap: 6px; margin-top: 12px; }
   .device-keys button { min-width: 0; width: 100%; padding-left: 8px; padding-right: 8px; }
   .device-key-help { font-size: 11px; line-height: 1.35; overflow-wrap: anywhere; }
   .device-key-help p { white-space: normal; }

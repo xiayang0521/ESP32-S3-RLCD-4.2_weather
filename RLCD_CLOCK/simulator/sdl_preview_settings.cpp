@@ -159,7 +159,7 @@ void build_settings_preview_page(const char *mode)
             settings_layout::GridCell cell = settings_layout::settings_grid_cell(i);
             make_settings_grid_item(screen, cell.x, cell.y, order_items[i], i == 3);
         }
-        feedback_label = make_label(screen, 24, 246, 352, 20, "长按 KEY 保存返回");
+        feedback_label = make_label(screen, 24, 246, 352, 20, "按 BACK 保存返回");
     } else if (primary == 0) {
         static const char *network_items[] = {"同步时间", "同步天气", "更新一言", "天气城市 已设置"};
         for (int i = 0; i < 4; ++i) {
@@ -262,7 +262,7 @@ void build_settings_preview_page(const char *mode)
     }
     lv_obj_set_style_text_align(feedback_label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
 
-    lv_obj_t *hint = make_label(screen, 24, 270, 352, 22, "KEY选择  长按返回  BOOT确认");
+    lv_obj_t *hint = make_label(screen, 24, 270, 352, 22, "SEL选择  BACK返回  BOOT确认");
     lv_obj_set_style_text_align(hint, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
 }
 
@@ -320,6 +320,6 @@ void build_web_settings_page(const WebDemoState &state, const char *version)
     }
     auto *feedback=make_label(screen,18,240,364,28,state.feedback);
     lv_obj_set_style_text_align(feedback,LV_TEXT_ALIGN_CENTER,0);
-    auto *hint=make_label(screen,24,274,352,22,"KEY选择  长按返回  BOOT确认");
+    auto *hint=make_label(screen,24,274,352,22,"SEL选择  BACK返回  BOOT确认");
     lv_obj_set_style_text_align(hint,LV_TEXT_ALIGN_CENTER,0);
 }

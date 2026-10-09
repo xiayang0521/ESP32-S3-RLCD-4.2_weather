@@ -14,12 +14,14 @@ constexpr bool button_gpio_config_retry_due(unsigned completed_attempt,
 
 constexpr bool button_task_can_wait_for_edge(bool edge_wakeup_ready,
                                              bool boot_pressed,
-                                             bool key_pressed,
+                                             bool sel_pressed,
+                                             bool back_pressed,
                                              bool press_tracking_active)
 {
     return edge_wakeup_ready &&
            !boot_pressed &&
-           !key_pressed &&
+           !sel_pressed &&
+           !back_pressed &&
            !press_tracking_active;
 }
 

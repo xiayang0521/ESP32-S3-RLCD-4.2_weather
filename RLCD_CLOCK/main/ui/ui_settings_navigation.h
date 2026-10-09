@@ -1,4 +1,4 @@
-// 声明设置页菜单数量、确认状态和 KEY 导航接口。
+// 声明设置页菜单数量、确认状态和 SEL/BACK 导航接口。
 #pragma once
 
 #include "ui_settings_contract.h"

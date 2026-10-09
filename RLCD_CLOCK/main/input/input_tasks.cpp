@@ -1,4 +1,5 @@
-// 处理 BOOT 和 KEY 按键输入、页面切换和设置页操作请求。
+// 处理 BOOT、SEL、BACK 按键输入、页面切换和设置页操作请求。
+// 原 KEY（GPIO18）硬件损坏：短按选择迁至 SEL（GPIO2），返回迁至 BACK（GPIO15）。
 #include "input_tasks.h"
 
 #include "active_work_page_state_internal.h"
@@ -35,15 +36,17 @@
 #define BUTTON_WAKEUP_FAILED_LOG_FORMAT "button light sleep wakeup failed: %s; using polling fallback"
 #define BUTTON_EDGE_WAKEUP_READY_LOG_FORMAT "button edge wakeup ready"
 #define BUTTON_SWITCH_WORK_PAGE_LOG_FORMAT "switch work page: %d"
-#define BUTTON_SHOW_SETTINGS_LOG_FORMAT "key button clicked, showing settings page"
+#define BUTTON_SHOW_SETTINGS_LOG_FORMAT "sel button clicked, showing settings page"
 
 namespace {
 constexpr int kButtonDebounceMs = 18;
 constexpr int kButtonLongPressMs = 1200;
 constexpr int kButtonBusyFeedbackMs = 2000;
 constexpr uint64_t kBootButtonPinMask = 1ULL << kBootButtonGpio;
-constexpr uint64_t kKeyButtonPinMask = 1ULL << kKeyButtonGpio;
-constexpr uint64_t kButtonInputPinMask = kBootButtonPinMask | kKeyButtonPinMask;
+constexpr uint64_t kSelButtonPinMask = 1ULL << kSelButtonGpio;
+constexpr uint64_t kBackButtonPinMask = 1ULL << kBackButtonGpio;
+constexpr uint64_t kButtonInputPinMask =
+    kBootButtonPinMask | kSelButtonPinMask | kBackButtonPinMask;
 constexpr TickType_t kButtonDebounceTicks = pdMS_TO_TICKS(kButtonDebounceMs);
 constexpr TickType_t kButtonLongPressTicks = pdMS_TO_TICKS(kButtonLongPressMs);
 constexpr const char *kSettingsBusyFeedbackText = "请等待操作完成";
@@ -52,9 +55,11 @@ TaskNotificationTarget s_button_task_target;
 static_assert(kButtonLongPressMs > kButtonDebounceMs,
               "button long-press duration must be longer than debounce duration");
 static_assert(kBootButtonPinMask != 0, "BOOT button pin mask must not be empty");
-static_assert(kKeyButtonPinMask != 0, "KEY button pin mask must not be empty");
-static_assert(kButtonInputPinMask == (kBootButtonPinMask | kKeyButtonPinMask),
-              "button input pin mask must include BOOT and KEY");
+static_assert(kSelButtonPinMask != 0, "SEL button pin mask must not be empty");
+static_assert(kBackButtonPinMask != 0, "BACK button pin mask must not be empty");
+static_assert(kButtonInputPinMask ==
+                  (kBootButtonPinMask | kSelButtonPinMask | kBackButtonPinMask),
+              "button input pin mask must include BOOT, SEL and BACK");
 static_assert(kButtonLongPressTicks > kButtonDebounceTicks,
               "button long-press tick duration must be longer than debounce duration");
 static_assert(kButtonGpioConfigMaxAttempts > 1,
@@ -94,13 +99,32 @@ void enter_settings_primary_menu(TickType_t now)
     settings_activity_record(now);
 }
 
-void handle_settings_key_long_or_busy()
+void handle_settings_back_or_busy(TickType_t now)
 {
+    settings_activity_record(now);
     if (!is_settings_sync_busy() && !ota_flow_active()) {
         handle_settings_key_long();
         return;
     }
     set_settings_feedback(kSettingsBusyFeedbackText, kButtonBusyFeedbackMs);
+}
+
+void execute_back_action(TickType_t now)
+{
+    if (settings_page_requested()) {
+        handle_settings_back_or_busy(now);
+        return;
+    }
+    if (info_page_requested()) {
+        info_page_clear();
+        return_to_system_settings_item(kSystemSettingsInfoItem, now);
+        return;
+    }
+    if (network_diag_page_requested()) {
+        cancel_network_diagnostics_sync();
+        network_diag_page_clear();
+        return_to_system_settings_item(kSystemSettingsNetworkDiagItem, now);
+    }
 }
 
 void IRAM_ATTR notify_button_edge(void *)
@@ -117,16 +141,22 @@ void IRAM_ATTR notify_button_edge(void *)
 void disable_button_interrupts()
 {
     (void)gpio_set_intr_type(kBootButtonGpio, GPIO_INTR_DISABLE);
-    (void)gpio_set_intr_type(kKeyButtonGpio, GPIO_INTR_DISABLE);
+    (void)gpio_set_intr_type(kSelButtonGpio, GPIO_INTR_DISABLE);
+    (void)gpio_set_intr_type(kBackButtonGpio, GPIO_INTR_DISABLE);
 }
 
-void remove_button_isr_handlers(bool boot_registered, bool key_registered)
+void remove_button_isr_handlers(bool boot_registered,
+                                bool sel_registered,
+                                bool back_registered)
 {
     if (boot_registered) {
         (void)gpio_isr_handler_remove(kBootButtonGpio);
     }
-    if (key_registered) {
-        (void)gpio_isr_handler_remove(kKeyButtonGpio);
+    if (sel_registered) {
+        (void)gpio_isr_handler_remove(kSelButtonGpio);
+    }
+    if (back_registered) {
+        (void)gpio_isr_handler_remove(kBackButtonGpio);
     }
     disable_button_interrupts();
 }
@@ -156,6 +186,25 @@ bool configure_button_gpio_with_retry(const gpio_config_t &config)
     return false;
 }
 
+bool add_button_isr_handler(gpio_num_t gpio,
+                            bool &registered_flag,
+                            bool boot_registered,
+                            bool sel_registered,
+                            bool back_registered)
+{
+    esp_err_t err = gpio_isr_handler_add(gpio, notify_button_edge, nullptr);
+    if (err == ESP_OK) {
+        registered_flag = true;
+        return true;
+    }
+    ESP_LOGW(TAG,
+             BUTTON_ISR_HANDLER_FAILED_LOG_FORMAT,
+             static_cast<int>(gpio),
+             esp_err_to_name(err));
+    remove_button_isr_handlers(boot_registered, sel_registered, back_registered);
+    return false;
+}
+
 bool setup_button_edge_wakeup()
 {
     esp_err_t err = gpio_install_isr_service(0);
@@ -166,35 +215,34 @@ bool setup_button_edge_wakeup()
     }
 
     bool boot_registered = false;
-    bool key_registered = false;
-    err = gpio_isr_handler_add(kBootButtonGpio, notify_button_edge, nullptr);
-    if (err == ESP_OK) {
-        boot_registered = true;
-    } else {
-        ESP_LOGW(TAG,
-                 BUTTON_ISR_HANDLER_FAILED_LOG_FORMAT,
-                 static_cast<int>(kBootButtonGpio),
-                 esp_err_to_name(err));
-        remove_button_isr_handlers(boot_registered, key_registered);
+    bool sel_registered = false;
+    bool back_registered = false;
+    if (!add_button_isr_handler(kBootButtonGpio,
+                                boot_registered,
+                                boot_registered,
+                                sel_registered,
+                                back_registered)) {
         return false;
     }
-
-    err = gpio_isr_handler_add(kKeyButtonGpio, notify_button_edge, nullptr);
-    if (err == ESP_OK) {
-        key_registered = true;
-    } else {
-        ESP_LOGW(TAG,
-                 BUTTON_ISR_HANDLER_FAILED_LOG_FORMAT,
-                 static_cast<int>(kKeyButtonGpio),
-                 esp_err_to_name(err));
-        remove_button_isr_handlers(boot_registered, key_registered);
+    if (!add_button_isr_handler(kSelButtonGpio,
+                                sel_registered,
+                                boot_registered,
+                                sel_registered,
+                                back_registered)) {
+        return false;
+    }
+    if (!add_button_isr_handler(kBackButtonGpio,
+                                back_registered,
+                                boot_registered,
+                                sel_registered,
+                                back_registered)) {
         return false;
     }
 
     err = esp_sleep_enable_ext1_wakeup_io(kButtonInputPinMask, ESP_EXT1_WAKEUP_ANY_LOW);
     if (err != ESP_OK) {
         ESP_LOGW(TAG, BUTTON_WAKEUP_FAILED_LOG_FORMAT, esp_err_to_name(err));
-        remove_button_isr_handlers(boot_registered, key_registered);
+        remove_button_isr_handlers(boot_registered, sel_registered, back_registered);
         return false;
     }
 
@@ -221,17 +269,21 @@ void button_task(void *)
     regular_app_task_mark_ready(RegularAppTaskId::kButton);
 
     TickType_t boot_pressed_since = 0;
-    TickType_t key_pressed_since = 0;
-    bool key_press_opened_settings = false;
-    bool key_long_handled = false;
+    TickType_t sel_pressed_since = 0;
+    TickType_t back_pressed_since = 0;
+    bool sel_press_opened_settings = false;
+    bool sel_long_handled = false;
+    bool back_handled = false;
     bool boot_press_stopped_alert = false;
-    bool key_press_stopped_alert = false;
+    bool sel_press_stopped_alert = false;
+    bool back_press_stopped_alert = false;
 
     for (;;) {
         runtime_health_record_current_task_stack(RegularAppTaskId::kButton);
         TickType_t now = xTaskGetTickCount();
         bool boot_pressed = gpio_get_level(kBootButtonGpio) == 0;
-        bool key_pressed = gpio_get_level(kKeyButtonGpio) == 0;
+        bool sel_pressed = gpio_get_level(kSelButtonGpio) == 0;
+        bool back_pressed = gpio_get_level(kBackButtonGpio) == 0;
 
         if (boot_pressed) {
             if (boot_pressed_since == 0) {
@@ -270,58 +322,39 @@ void button_task(void *)
             boot_press_stopped_alert = false;
         }
 
-        if (key_pressed) {
-            if (key_pressed_since == 0) {
-                key_pressed_since = now;
-                key_press_opened_settings = false;
-                key_long_handled = false;
-                key_press_stopped_alert = alarm_stop_ringing_from_button() ||
+        if (sel_pressed) {
+            if (sel_pressed_since == 0) {
+                sel_pressed_since = now;
+                sel_press_opened_settings = false;
+                sel_long_handled = false;
+                sel_press_stopped_alert = alarm_stop_ringing_from_button() ||
                                           pomodoro_stop_alert_from_button();
                 if (settings_page_requested()) {
                     settings_activity_record(now);
                 }
-                if (!key_press_stopped_alert &&
+                if (!sel_press_stopped_alert &&
                     !settings_page_requested() && !info_page_requested() && !network_diag_page_requested()) {
                     ESP_LOGI(TAG, BUTTON_SHOW_SETTINGS_LOG_FORMAT);
                     enter_settings_primary_menu(now);
-                    key_press_opened_settings = true;
+                    sel_press_opened_settings = true;
                     notify_ui_task();
                 }
-            } else if (!key_press_stopped_alert &&
-                       !key_press_opened_settings &&
-                       !key_long_handled &&
+            } else if (!sel_press_stopped_alert &&
+                       !sel_press_opened_settings &&
+                       !sel_long_handled &&
                        settings_page_requested() &&
-                       button_press_is_long(now - key_pressed_since)) {
-                settings_activity_record(now);
-                handle_settings_key_long_or_busy();
-                key_long_handled = true;
-                notify_ui_task();
-            } else if (!key_long_handled &&
-                       info_page_requested() &&
-                       !settings_page_requested() &&
-                       button_press_is_long(now - key_pressed_since)) {
-                info_page_clear();
-                return_to_system_settings_item(kSystemSettingsInfoItem, now);
-                key_long_handled = true;
-                notify_ui_task();
-            } else if (!key_long_handled &&
-                       network_diag_page_requested() &&
-                       !settings_page_requested() &&
-                       button_press_is_long(now - key_pressed_since)) {
-                cancel_network_diagnostics_sync();
-                network_diag_page_clear();
-                return_to_system_settings_item(kSystemSettingsNetworkDiagItem, now);
-                key_long_handled = true;
+                       button_press_is_long(now - sel_pressed_since)) {
+                handle_settings_back_or_busy(now);
+                sel_long_handled = true;
                 notify_ui_task();
             }
         } else {
-            if (key_pressed_since != 0 &&
-                !key_press_stopped_alert &&
-                !key_press_opened_settings && !key_long_handled && settings_page_requested()) {
-                TickType_t held = now - key_pressed_since;
+            if (sel_pressed_since != 0 &&
+                !sel_press_stopped_alert &&
+                !sel_press_opened_settings && !sel_long_handled && settings_page_requested()) {
+                TickType_t held = now - sel_pressed_since;
                 if (button_press_is_long(held)) {
-                    settings_activity_record(now);
-                    handle_settings_key_long_or_busy();
+                    handle_settings_back_or_busy(now);
                     notify_ui_task();
                 } else if (button_press_is_short(held)) {
                     settings_activity_record(now);
@@ -333,25 +366,49 @@ void button_task(void *)
                     }
                 }
             }
-            if (key_pressed_since != 0 && settings_page_requested()) {
+            if (sel_pressed_since != 0 && settings_page_requested()) {
                 settings_activity_record(now);
             }
-            key_pressed_since = 0;
-            key_press_opened_settings = false;
-            key_long_handled = false;
-            key_press_stopped_alert = false;
+            sel_pressed_since = 0;
+            sel_press_opened_settings = false;
+            sel_long_handled = false;
+            sel_press_stopped_alert = false;
         }
+
+        if (back_pressed) {
+            if (back_pressed_since == 0) {
+                back_pressed_since = now;
+                back_handled = false;
+                back_press_stopped_alert = alarm_stop_ringing_from_button() ||
+                                           pomodoro_stop_alert_from_button();
+            } else if (!back_press_stopped_alert &&
+                       !back_handled &&
+                       now - back_pressed_since >= kButtonDebounceTicks &&
+                       (settings_page_requested() ||
+                        info_page_requested() ||
+                        network_diag_page_requested())) {
+                execute_back_action(now);
+                back_handled = true;
+                notify_ui_task();
+            }
+        } else {
+            back_pressed_since = 0;
+            back_handled = false;
+            back_press_stopped_alert = false;
+        }
+
         const bool press_tracking_active =
-            boot_pressed_since != 0 || key_pressed_since != 0;
+            boot_pressed_since != 0 || sel_pressed_since != 0 || back_pressed_since != 0;
         if (button_task_can_wait_for_edge(edge_wakeup_ready,
                                           boot_pressed,
-                                          key_pressed,
+                                          sel_pressed,
+                                          back_pressed,
                                           press_tracking_active)) {
             (void)ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
             continue;
         }
 
-        const bool any_button_pressed = boot_pressed || key_pressed;
+        const bool any_button_pressed = boot_pressed || sel_pressed || back_pressed;
         bool interactive_surface = false;
         bool low_refresh_surface = false;
         if (!any_button_pressed) {

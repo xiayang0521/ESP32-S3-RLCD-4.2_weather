@@ -6,7 +6,8 @@ import { tr, setText } from '../i18n.js';
 
 const source = readFileSync(new URL('../simulator-ui.js', import.meta.url), 'utf8');
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-assert.ok(html.indexOf('id="simKey"') < html.indexOf('id="simBoot"'));
+assert.ok(html.indexOf('id="simSel"') > 0);
+assert.ok(html.indexOf('id="simBack"') > 0);
 let now = 0;
 const timers = new Map();
 const calls = [];
@@ -16,7 +17,7 @@ const target = () => ({
   addEventListener(name, handler) { this.listeners[name] = handler; },
   setPointerCapture() {}, contains() { return false; },
 });
-const buttons = { simBoot: target(), simKey: target(), simPortalToggle: target(), simPortalPanel: target() };
+const buttons = { simBoot: target(), simSel: target(), simBack: target(), simPortalToggle: target(), simPortalPanel: target() };
 const device = target();
 const window = target();
 const context = vm.createContext({
@@ -34,25 +35,36 @@ const advance = ms => {
   now += ms;
   for (const [id, timer] of timers) if (timer.at <= now) { timers.delete(id); timer.fn(); }
 };
-const down = (button = buttons.simKey) => button.listeners.pointerdown({ button: 0, isPrimary: true, pointerId: 1 });
+const down = (button = buttons.simSel) => button.listeners.pointerdown({ button: 0, isPrimary: true, pointerId: 1 });
 down(); advance(1199); assert.equal(calls.length, 0);
 advance(1); assert.deepEqual(calls, [[1, true]]);
-advance(5000); buttons.simKey.listeners.pointerup();
+advance(5000); buttons.simSel.listeners.pointerup();
 assert.equal(calls.length, 1, 'holding and releasing must not repeat long press or emit short press');
-down(); advance(100); buttons.simKey.listeners.pointerup();
+down(); advance(100); buttons.simSel.listeners.pointerup();
 assert.deepEqual(calls.at(-1), [1, false]);
 for (const cancel of ['pointercancel', 'lostpointercapture']) {
-  down(); buttons.simKey.listeners[cancel](); advance(1300); buttons.simKey.listeners.pointerup();
+  down(); buttons.simSel.listeners[cancel](); advance(1300); buttons.simSel.listeners.pointerup();
 }
 down(); window.listeners.blur(); advance(1300);
 assert.equal(calls.length, 2, 'cancelled input must not trigger actions');
 down(buttons.simBoot); advance(100); buttons.simBoot.listeners.pointerup();
 assert.deepEqual(calls.at(-1), [0, false]);
+down(buttons.simBack);
+assert.deepEqual(calls.at(-1), [2, true], 'BACK triggers immediately on press');
+advance(300); buttons.simBack.listeners.pointerup();
+assert.deepEqual(calls.at(-1), [2, false], 'BACK release resets the one-shot guard');
+down(buttons.simBack);
+assert.deepEqual(calls.at(-1), [2, true], 'BACK can trigger again after release');
+buttons.simBack.listeners.pointerup();
 const keyEvent = { target: { matches: () => false }, code: 'KeyK', preventDefault() {} };
 device.listeners.keydown(keyEvent); advance(600); device.listeners.keydown(keyEvent);
 advance(600); assert.deepEqual(calls.at(-1), [1, true]);
 device.listeners.keyup(keyEvent); advance(2000);
-assert.equal(calls.length, 4, 'keyboard repeat and keyup must not repeat long press');
+const backKeyEvent = { target: { matches: () => false }, code: 'KeyL', preventDefault() {} };
+device.listeners.keydown(backKeyEvent);
+assert.deepEqual(calls.at(-1), [2, true]);
+device.listeners.keyup(backKeyEvent);
+assert.deepEqual(calls.at(-1), [2, false]);
 buttons.simPortalToggle.listeners.click({currentTarget: buttons.simPortalToggle});
 assert.equal(device.hidden, true);
 assert.equal(buttons.simPortalPanel.hidden, false);

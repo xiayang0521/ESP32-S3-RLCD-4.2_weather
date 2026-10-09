@@ -56,7 +56,7 @@ BIN hash preservation, serial mocks, hash failures, persistence and offline
 switching. Update all eight User manuals for user-facing behavior changes.
 
 Mobile layout rules are scoped to `max-width: 800px`: simulator columns stack,
-KEY/help/BOOT remain a stable three-column row above the canvas, and at 480px
+BACK/help/BOOT/SEL remain a stable four-column row above the canvas, and at 480px
 the six tabs become a visible two-column grid. Do not shrink the 400x300 canvas
 below its aspect ratio or allow controls to overlap. Mobile support is for
 viewing and editing; Web Serial operations still require desktop Chrome/Edge.
@@ -88,12 +88,14 @@ Pages requires generated artifacts with matching hashes; missing/corrupt files
 fail the build. `test_simulator_artifacts.mjs`, `test_pages_site.mjs`, native
 `web_demo_state_test` and browser offline/key checks cover this boundary.
 
-The device toolbar places KEY on the left and BOOT on the right. Holding KEY
-for 1.2 seconds dispatches one long-press event before release; release must not
+The device toolbar places BACK on the far left and SEL on the far right, with
+BOOT beside it. BACK dispatches one back event immediately on press; its release
+only resets the one-shot guard and must not trigger any other action. SEL still
+supports the 1.2-second long-press fallback; release after long press must not
 also dispatch a short press. Mouse capture cancellation, focus loss and tab
-changes cancel pending holds. Keyboard K/B uses the same timing. Run
+changes cancel pending holds. Keyboard K/B/L uses the same logic. Run
 `node host_web/scripts/test_simulator_keys.mjs` for the input regression checks.
-This browser adapter does not change physical firmware button handling.
+This browser adapter mirrors the physical BOOT/SEL/BACK firmware button model.
 
 ## Simplified Firmware Install
 

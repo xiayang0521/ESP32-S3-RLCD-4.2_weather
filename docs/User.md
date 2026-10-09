@@ -13,10 +13,12 @@ API Host is your QWeather account's assigned domain, not a key or API path. For 
 
 ## Use the buttons
 
+The original KEY button (GPIO18) failed, so its functions are split across two new buttons:
+
 - Short **BOOT**: next work page; confirm within settings.
-- Short **KEY**: open settings; move the selection.
-- Hold **KEY**: back one level or leave settings.
-- While an alarm or focus-completion sound plays, either button stops it.
+- Short **SEL (GPIO2)**: open settings; move the selection.
+- **BACK (GPIO15)**: back one level or leave settings; return to settings from the info and network diagnostics pages.
+- While an alarm or focus-completion sound plays, any button stops it.
 
 Settings close after about 30 idle seconds. The firmware UI is primarily in Simplified Chinese; this guide does not imply a language selector.
 

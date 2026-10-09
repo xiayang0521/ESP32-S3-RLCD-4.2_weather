@@ -101,6 +101,10 @@ function cancelKey(key) {
 function cancelHeldKeys() { for (const key of heldKeys.keys()) cancelKey(key); }
 function begin(key) {
   if (!runtime || failed || !running() || heldKeys.has(key)) return;
+  if (key === 2) {
+    press(2, true);
+    return;
+  }
   const held = { start: performance.now(), fired: false, timer: undefined };
   held.timer = setTimeout(() => {
     if (heldKeys.get(key) !== held) return;
@@ -110,19 +114,23 @@ function begin(key) {
   heldKeys.set(key, held);
 }
 function end(key) {
+  if (key === 2) {
+    press(2, false);
+    return;
+  }
   const held = heldKeys.get(key);
   if (!held) return;
   cancelKey(key);
   if (!held.fired) press(key, performance.now() - held.start >= 1200);
 }
-for (const [id, key] of [['simBoot', 0], ['simKey', 1]]) {
+for (const [id, key] of [['simBoot', 0], ['simSel', 1], ['simBack', 2]]) {
   const button = document.getElementById(id);
   button.addEventListener('pointerdown', event => { if (button.disabled || event.button !== 0 || !event.isPrimary) return; begin(key); button.setPointerCapture(event.pointerId); });
   button.addEventListener('pointerup', () => end(key));
-  button.addEventListener('pointercancel', () => cancelKey(key));
-  button.addEventListener('lostpointercapture', () => cancelKey(key));
+  button.addEventListener('pointercancel', () => key === 2 ? null : cancelKey(key));
+  button.addEventListener('lostpointercapture', () => key === 2 ? null : cancelKey(key));
   button.addEventListener('contextmenu', event => event.preventDefault());
-  button.addEventListener('click', event => { if (event.detail === 0) press(key, false); });
+  button.addEventListener('click', event => { if (event.detail === 0 && key !== 2) press(key, false); });
 }
 const device = document.querySelector('.virtual-device');
 document.getElementById('simPortalToggle').addEventListener('click', event => {
@@ -136,10 +144,14 @@ document.getElementById('simPortalToggle').addEventListener('click', event => {
 });
 device.addEventListener('keydown', event => {
   if (event.target.matches('input,select,textarea')) return;
-  const key = event.code === 'KeyB' ? 0 : event.code === 'KeyK' ? 1 : -1;
+  const key = event.code === 'KeyB' ? 0 : event.code === 'KeyK' ? 1 : event.code === 'KeyL' ? 2 : -1;
   if (key >= 0) { event.preventDefault(); begin(key); }
 });
-device.addEventListener('keyup', event => { if (event.code === 'KeyB') end(0); if (event.code === 'KeyK') end(1); });
+device.addEventListener('keyup', event => {
+  if (event.code === 'KeyB') end(0);
+  else if (event.code === 'KeyK') end(1);
+  else if (event.code === 'KeyL') end(2);
+});
 window.addEventListener('blur', cancelHeldKeys);
 device.addEventListener('focusout', event => { if (!device.contains(event.relatedTarget)) cancelHeldKeys(); });
 document.getElementById('simReset').addEventListener('click', () => { runtime._demo_reset(); document.getElementById('simWeather').value = '20'; updateStatus(); });
