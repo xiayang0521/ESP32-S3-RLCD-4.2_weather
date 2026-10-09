@@ -1,6 +1,20 @@
 {
-  "latest": "v1.6.17",
+  "latest": "v1.6.18",
   "items": [
+    {
+      "version": "v1.6.18",
+      "notes": "v1.6.18：共 1 项更新。\n1. SEL（GPIO2）与 BACK（GPIO15）也已物理损坏；PWR 是纯硬件电源键（接 ECJ23001 电源开关芯片 KEY 脚），固件无法读取。所有软件操作合并到 BOOT（GPIO0）单键，通过三手势覆盖：单击（~50 ms）移动选择，双击（350 ms 内两次短按）确认/进入设置/启动操作，长按（≥ 1200 ms）逐级返回；轻睡眠唤醒仍使用 BOOT 的 ext1。固件内置 UI 提示文案、SDL/Emscripten 模拟器与 host_web 网页模拟器同步收敛为单键模型。\n完整说明见源码仓库同版本 Release。",
+      "app": {
+        "url": "https://github.com/xiayang0521/ESP32-S3-RLCD-4.2_weather/releases/download/v1.6.18/weather_clock_v1.6.18.bin",
+        "sha256": "05d078cf1592a36b822a2001064af6c70d28010aeb38433f839c85e80e5f1c3e",
+        "size": 6315696
+      },
+      "merged": {
+        "url": "https://github.com/xiayang0521/ESP32-S3-RLCD-4.2_weather/releases/download/v1.6.18/weather_clock_v1.6.18_merged.bin",
+        "sha256": "63d5ef261320e0c6c75d608070deda0ddfa4e22f9df95d1e8d521a4cb170e2ad",
+        "size": 16509951
+      }
+    },
     {
       "version": "v1.6.17",
       "notes": "v1.6.17：共 1 项更新。\n1. KEY（GPIO18）硬件损坏无法使用，功能迁移到两个新按键：SEL（GPIO2）短按进入设置/移动选择，BACK（GPIO15）返回上一级或退出设置；GPIO18 已从输入与休眠唤醒中移除。\n完整说明见源码仓库同版本 Release。",
@@ -124,20 +138,6 @@
       "merged": {
         "url": "https://github.com/wickenzh/ESP32-S3-RLCD-4.2/releases/download/v1.6.9/weather_clock_v1.6.9_merged.bin",
         "sha256": "612108130a5412f88f448bf8751f4b99b6fbcec4b9df22083f8a5692e67cc4e0",
-        "size": 16509951
-      }
-    },
-    {
-      "version": "v1.6.8",
-      "notes": "v1.6.8：共 4 项更新。\n1. 聚合时钟新增多云与阴天静态手工云层，保留原高低温点阵与页面布局，仅随天气变化更新，不增…\n2. 修复聚合天气装饰层按布局前省略号宽度进行避让不准确的问题，避免云层与温度读数区域重叠。\n3. 修复 WeatherClock Studio 更新后旧 Service Worker…\n4. 优化 Studio 在线固件安装流程、芯片与容量识别、覆盖确认和资源写入前置门禁；发布…\n完整说明见源码仓库同版本 Release。",
-      "app": {
-        "url": "https://github.com/wickenzh/ESP32-S3-RLCD-4.2/releases/download/v1.6.8/weather_clock_v1.6.8.bin",
-        "sha256": "7c322e8a300f4e7bf28cf0f57835be85cae7af21b4c6be5ef247e8bec16b64bf",
-        "size": 6303312
-      },
-      "merged": {
-        "url": "https://github.com/wickenzh/ESP32-S3-RLCD-4.2/releases/download/v1.6.8/weather_clock_v1.6.8_merged.bin",
-        "sha256": "f24d50cc216694c09040757c3dadb3ef8d6533a7b3a0ddff15b5206dd6c11d2c",
         "size": 16509951
       }
     }

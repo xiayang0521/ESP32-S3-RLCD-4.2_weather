@@ -1,7 +1,7 @@
 {
-  "version": "v1.6.17",
-  "url": "https://github.com/xiayang0521/ESP32-S3-RLCD-4.2_weather/releases/download/v1.6.17/weather_clock_v1.6.17.bin",
-  "sha256": "deee3ea593c3789ec808e10b4fc9ab9abe11f0079fe9c4994c69f5b8faf3d54c",
-  "size": 6315920,
-  "notes": "v1.6.17：共 1 项更新。\n1. KEY（GPIO18）硬件损坏无法使用，功能迁移到两个新按键：SEL（GPIO2）短按进入设置/移动选择，BACK（GPIO15）返回上一级或退出设置；GPIO18 已从输入与休眠唤醒中移除。\n完整说明见源码仓库同版本 Release。"
+  "version": "v1.6.18",
+  "url": "https://github.com/xiayang0521/ESP32-S3-RLCD-4.2_weather/releases/download/v1.6.18/weather_clock_v1.6.18.bin",
+  "sha256": "05d078cf1592a36b822a2001064af6c70d28010aeb38433f839c85e80e5f1c3e",
+  "size": 6315696,
+  "notes": "v1.6.18：共 1 项更新。\n1. SEL（GPIO2）与 BACK（GPIO15）也已物理损坏；PWR 是纯硬件电源键（接 ECJ23001 电源开关芯片 KEY 脚），固件无法读取。所有软件操作合并到 BOOT（GPIO0）单键，通过三手势覆盖：单击（~50 ms）移动选择，双击（350 ms 内两次短按）确认/进入设置/启动操作，长按（≥ 1200 ms）逐级返回；轻睡眠唤醒仍使用 BOOT 的 ext1。固件内置 UI 提示文案、SDL/Emscripten 模拟器与 host_web 网页模拟器同步收敛为单键模型。\n完整说明见源码仓库同版本 Release。"
 }
