@@ -105,13 +105,7 @@ function begin(key) {
     press(2, true);
     return;
   }
-  const held = { start: performance.now(), fired: false, timer: undefined };
-  held.timer = setTimeout(() => {
-    if (heldKeys.get(key) !== held) return;
-    held.fired = true;
-    press(key, true);
-  }, 1200);
-  heldKeys.set(key, held);
+  heldKeys.set(key, { start: performance.now(), timer: undefined });
 }
 function end(key) {
   if (key === 2) {
@@ -121,7 +115,7 @@ function end(key) {
   const held = heldKeys.get(key);
   if (!held) return;
   cancelKey(key);
-  if (!held.fired) press(key, performance.now() - held.start >= 1200);
+  press(key, false);
 }
 for (const [id, key] of [['simBoot', 0], ['simSel', 1], ['simBack', 2]]) {
   const button = document.getElementById(id);
@@ -143,7 +137,7 @@ document.getElementById('simPortalToggle').addEventListener('click', event => {
   refreshVisibility();
 });
 device.addEventListener('keydown', event => {
-  if (event.target.matches('input,select,textarea')) return;
+  if (event.target.matches('input,select,textarea') || event.repeat) return;
   const key = event.code === 'KeyB' ? 0 : event.code === 'KeyK' ? 1 : event.code === 'KeyL' ? 2 : -1;
   if (key >= 0) { event.preventDefault(); begin(key); }
 });

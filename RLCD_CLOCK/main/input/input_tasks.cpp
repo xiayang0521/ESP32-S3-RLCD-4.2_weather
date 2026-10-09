@@ -272,7 +272,6 @@ void button_task(void *)
     TickType_t sel_pressed_since = 0;
     TickType_t back_pressed_since = 0;
     bool sel_press_opened_settings = false;
-    bool sel_long_handled = false;
     bool back_handled = false;
     bool boot_press_stopped_alert = false;
     bool sel_press_stopped_alert = false;
@@ -326,7 +325,6 @@ void button_task(void *)
             if (sel_pressed_since == 0) {
                 sel_pressed_since = now;
                 sel_press_opened_settings = false;
-                sel_long_handled = false;
                 sel_press_stopped_alert = alarm_stop_ringing_from_button() ||
                                           pomodoro_stop_alert_from_button();
                 if (settings_page_requested()) {
@@ -339,24 +337,13 @@ void button_task(void *)
                     sel_press_opened_settings = true;
                     notify_ui_task();
                 }
-            } else if (!sel_press_stopped_alert &&
-                       !sel_press_opened_settings &&
-                       !sel_long_handled &&
-                       settings_page_requested() &&
-                       button_press_is_long(now - sel_pressed_since)) {
-                handle_settings_back_or_busy(now);
-                sel_long_handled = true;
-                notify_ui_task();
             }
         } else {
             if (sel_pressed_since != 0 &&
                 !sel_press_stopped_alert &&
-                !sel_press_opened_settings && !sel_long_handled && settings_page_requested()) {
+                !sel_press_opened_settings && settings_page_requested()) {
                 TickType_t held = now - sel_pressed_since;
-                if (button_press_is_long(held)) {
-                    handle_settings_back_or_busy(now);
-                    notify_ui_task();
-                } else if (button_press_is_short(held)) {
+                if (button_press_is_short(held)) {
                     settings_activity_record(now);
                     if (!is_settings_sync_busy() && !ota_flow_active()) {
                         handle_settings_key_short();
@@ -371,7 +358,6 @@ void button_task(void *)
             }
             sel_pressed_since = 0;
             sel_press_opened_settings = false;
-            sel_long_handled = false;
             sel_press_stopped_alert = false;
         }
 

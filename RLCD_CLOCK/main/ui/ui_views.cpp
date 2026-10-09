@@ -483,7 +483,8 @@ void ui_task(void *)
                     const SettingsActivitySnapshot timeout_activity =
                         settings_activity_snapshot();
                     bool button_pressed = gpio_get_level(kBootButtonGpio) == 0 ||
-                                          gpio_get_level(kKeyButtonGpio) == 0;
+                                          gpio_get_level(kSelButtonGpio) == 0 ||
+                                          gpio_get_level(kBackButtonGpio) == 0;
                     if (!settings_action_handled &&
                         !button_pressed &&
                         !is_settings_sync_busy() && !ota_flow_active() &&

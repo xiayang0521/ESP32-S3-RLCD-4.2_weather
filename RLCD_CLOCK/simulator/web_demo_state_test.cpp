@@ -10,9 +10,12 @@ int main() {
     s.press(0,false,4);assert(s.secondary);
     s.press(0,false,5);assert(s.volume==100);
     s.press(0,false,6);assert(s.volume==20);
-    s.press(1,true,10);assert(!s.secondary);
+    s.press(1,true,10);assert(s.secondary);
     s.press(1,true,20);assert(s.scene==WebDemoState::Settings);
-    s.press(1,true,900);assert(s.scene==WebDemoState::Work);
+    s.press(2,true,30);assert(!s.secondary);
+    s.press(2,true,31);assert(s.scene==WebDemoState::Settings);
+    s.press(2,false,32);
+    s.press(2,true,900);assert(s.scene==WebDemoState::Work);
     s.scene=WebDemoState::Pages;s.secondary=true;s.enabled=1;s.selection=0;
     s.press(0,false,1000);assert(s.enabled==1);
     s.enabled=65;s.press(0,false,1001);assert(s.enabled==65);

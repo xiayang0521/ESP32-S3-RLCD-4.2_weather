@@ -18,13 +18,15 @@ Saved Wi-Fi credentials alone are not a complete weather configuration. Use your
 
 ## 2. Buttons and status bar
 
+The original KEY button (GPIO18) failed physically, so its functions are split between two new buttons: short-press SEL (GPIO2) for selection and BACK (GPIO15) for returning.
+
 | Button | Work page | Settings |
 | --- | --- | --- |
 | Short BOOT press | Next enabled page | Confirm or change the selected item |
-| Short KEY press | Open settings | Move selection |
-| Hold KEY | Follow the current screen prompt | Back one level, then back to the work page |
+| Short SEL press (GPIO2) | Open settings | Move selection |
+| BACK (GPIO15) | No action on work pages | Back one level, then leave settings; return to settings from the info and network diagnostics pages |
 
-Settings close after about 30 seconds of inactivity. Sorting actions restart this timer. During an alarm or focus-completion sound, either button stops the sound and consumes that press.
+Settings close after about 30 seconds of inactivity. Sorting actions restart this timer. During an alarm or focus-completion sound, any button stops the sound and consumes that press. GPIO18 is fully removed from input configuration and light-sleep wakeup, so a shorted dead button cannot wake the device.
 
 The battery icon is an estimate. Blinking indicates inferred charging, not USB presence. The Wi-Fi icon means the radio is on, not necessarily that internet access works. The speaker and alarm icons indicate enabled reminders and a one-shot alarm.
 
@@ -72,7 +74,7 @@ Offline mode stops ordinary networking and prevents enabling Weather Clock, Pict
 - Display: page toggles, page order, AI power saving, alarm status, and uploaded-image rotation.
 - System: offline mode, network diagnostics, factory reset, device information, and update checks.
 
-Only enabled pages appear in page order. Select with KEY and use BOOT to exchange positions as prompted. The first entry is home. At least one non-AI work page must remain enabled, and AI cannot be first. The history page has no special fixed five-minute return restriction.
+Only enabled pages appear in page order. Select with SEL, use BOOT to exchange positions as prompted, and press BACK to save and return. The first entry is home. At least one non-AI work page must remain enabled, and AI cannot be first. The history page has no special fixed five-minute return restriction.
 
 AI power saving is enabled by default. After five idle minutes on the AI page it returns home; an active focus timer suspends that return. Built-in images stay on a fixed 24-hour rotation.
 

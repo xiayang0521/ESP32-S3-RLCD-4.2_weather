@@ -67,13 +67,6 @@ struct WebDemoState {
             return;
         }
         if (held) {
-            if(key!=1) return;
-            pending=false; confirming=false;
-            if(scene==Work) return;
-            if(scene==Pages || scene==Order) {selection=scene==Order?1:0;scene=Settings; secondary=true; message("设置已保存",now);}
-            else if(scene!=Settings) {scene=Settings;secondary=true;dirty=true;}
-            else if(secondary) {secondary=false;return_block=now+800;dirty=true;}
-            else if(now>=return_block) work(now);
             return;
         }
         if(scene==Work) { if(key==0) next_page(); else settings(now); return; }

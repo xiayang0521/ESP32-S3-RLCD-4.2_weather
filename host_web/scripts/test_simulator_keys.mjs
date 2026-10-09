@@ -36,10 +36,9 @@ const advance = ms => {
   for (const [id, timer] of timers) if (timer.at <= now) { timers.delete(id); timer.fn(); }
 };
 const down = (button = buttons.simSel) => button.listeners.pointerdown({ button: 0, isPrimary: true, pointerId: 1 });
-down(); advance(1199); assert.equal(calls.length, 0);
-advance(1); assert.deepEqual(calls, [[1, true]]);
+down(); advance(1199); assert.equal(calls.length, 0, 'SEL never long-presses');
 advance(5000); buttons.simSel.listeners.pointerup();
-assert.equal(calls.length, 1, 'holding and releasing must not repeat long press or emit short press');
+assert.deepEqual(calls, [[1, false]], 'SEL emits one short press on release');
 down(); advance(100); buttons.simSel.listeners.pointerup();
 assert.deepEqual(calls.at(-1), [1, false]);
 for (const cancel of ['pointercancel', 'lostpointercapture']) {
@@ -56,11 +55,14 @@ assert.deepEqual(calls.at(-1), [2, false], 'BACK release resets the one-shot gua
 down(buttons.simBack);
 assert.deepEqual(calls.at(-1), [2, true], 'BACK can trigger again after release');
 buttons.simBack.listeners.pointerup();
-const keyEvent = { target: { matches: () => false }, code: 'KeyK', preventDefault() {} };
-device.listeners.keydown(keyEvent); advance(600); device.listeners.keydown(keyEvent);
-advance(600); assert.deepEqual(calls.at(-1), [1, true]);
-device.listeners.keyup(keyEvent); advance(2000);
-const backKeyEvent = { target: { matches: () => false }, code: 'KeyL', preventDefault() {} };
+const beforeHeldK = calls.length;
+const keyEvent = { target: { matches: () => false }, code: 'KeyK', repeat: false, preventDefault() {} };
+device.listeners.keydown(keyEvent); advance(600); device.listeners.keydown({...keyEvent, repeat: true});
+advance(600); assert.equal(calls.length, beforeHeldK, 'held K does nothing');
+device.listeners.keyup(keyEvent);
+assert.equal(calls.length, beforeHeldK + 1);
+assert.deepEqual(calls.at(-1), [1, false]);
+const backKeyEvent = { target: { matches: () => false }, code: 'KeyL', repeat: false, preventDefault() {} };
 device.listeners.keydown(backKeyEvent);
 assert.deepEqual(calls.at(-1), [2, true]);
 device.listeners.keyup(backKeyEvent);
